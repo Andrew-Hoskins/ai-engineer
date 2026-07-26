@@ -13,11 +13,31 @@ function getInitialTheme() {
 
 export default function App() {
   const [theme, setTheme] = useState(getInitialTheme)
+  const [visitors, setVisitors] = useState(null)
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
     localStorage.setItem('theme', theme)
   }, [theme])
+
+  useEffect(() => {
+    let cancelled = false
+    fetch(
+      'https://api.counterapi.dev/v1/andyhoskins-portfolio/visitors/up'
+    )
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => {
+        if (!cancelled && typeof data.count === 'number') {
+          setVisitors(data.count)
+        }
+      })
+      .catch(() => {
+        /* counter service unavailable — silently skip */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const toggleTheme = () => {
     setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
@@ -249,7 +269,16 @@ export default function App() {
         </section>
       </main>
 
-      <footer>&copy; {new Date().getFullYear()} Andy Hoskins</footer>
+      <footer>
+        &copy; {new Date().getFullYear()} Andy Hoskins
+        {visitors !== null && (
+          <span className="visitor-count">
+            {' · '}
+            <span aria-hidden="true">👁️</span>{' '}
+            {visitors.toLocaleString()} visitors
+          </span>
+        )}
+      </footer>
     </div>
   )
 }
